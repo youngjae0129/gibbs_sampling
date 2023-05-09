@@ -1,0 +1,28 @@
+def initialize_params(x_data, K, alpha):
+  lamdas = np.random.gamma(shape=1.0, scale=1.0, size=(K, V))
+  pis = dirichlet.rvs(alpha * np.ones(K), size=N)
+  
+def gibbs_sampling(x_data, K, alpha, beta, num_iters=1000):
+  for i in range(N):
+    for k in range(K):
+      log_topic_word_prob = np.sum(poisson.logpmf(x_data[i], mu=lambdas[k]))
+      log_topic_prior_prob = np.log(pis[i, k])
+      log_topic_probs[k] = log_topic_word_prob + log_topic_prior_prob
+
+  # Subtract the max log probability to avoid numerical instability
+  log_topic_probs = log_topic_probs - np.max(log_topic_probs)
+  topic_probs = np.exp(log_topic_probs)
+  topic_probs /= topic_probs.sum()
+
+  # Sample new_topic from a multinomial distribution
+  new_topic = np.random.choice(K, p=topic_probs)
+
+  topic_assignments[i] = new_topic
+  topic_counts[new_topic] += 1
+  topic_word_counts[new_topic] += x_data[i]
+
+  # Update lambdas for the new topic
+  lambdas[new_topic] = gamma.rvs(a=topic_word_counts[new_topic] + beta, scale=1.0)
+
+  # Update pi for the current document
+  pis[i] = dirichlet.rvs(alpha + topic_counts)
